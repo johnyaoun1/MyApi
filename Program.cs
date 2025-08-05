@@ -1,48 +1,55 @@
-using Microsoft.EntityFrameworkCore;
-using MyApi.Data;
-using MyApi.Middleware;
-using MyApi.Filters;
 using MyApi.Services;
-using MediatR;
-using MyApi.Commands;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection; 
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Register services in the container
-builder.Services.AddControllers(options =>
+namespace MyApi
 {
-    options.Filters.Add<CallerValidationFilter>();
-});
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-// Register StudentService as Singleton
-builder.Services.AddSingleton<StudentService>();
+            // Add services to the container.
+            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+            builder.Services.AddOpenApi();
+            builder.Services.AddSingleton<StudentService>();
 
-// Register the ApplicationDbContext with SQL Server
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            var app = builder.Build();
 
-// Register MediatR for CQRS
-builder.Services.AddMediatR(typeof(Program));
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.MapOpenApi();
+            }
 
-// Register Middleware
-builder.Services.AddScoped<CallerValidationFilter>();
+            app.UseHttpsRedirection();
 
-// Register necessary filters globally
-builder.Services.AddScoped<CallerValidationFilter>();
+            var summaries = new[]
+            {
+                "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+            };
 
-// Configure Dependency Injection for services
-builder.Services.AddScoped<LoggingMiddleware>();
+            app.MapGet("/weatherforecast", () =>
+            {
+                var forecast =  Enumerable.Range(1, 5).Select(index =>
+                    new WeatherForecast
+                    (
+                        DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                        Random.Shared.Next(-20, 55),
+                        summaries[Random.Shared.Next(summaries.Length)]
+                    ))
+                    .ToArray();
+                return forecast;
+            })
+            .WithName("GetWeatherForecast");
 
-var app = builder.Build();
+            app.Run();
+        }
+    }
 
-// Apply filters globally
-// CallerValidationFilter is now registered globally via AddControllers options above.
-
-// Apply filters globally
-// CallerValidationFilter is now registered globally via AddControllers options above.
-
-// Use default routing for controllers
-app.MapControllers();
-
-// Run the application
-app.Run();
+    public record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+    {
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
+}
