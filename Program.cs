@@ -9,7 +9,10 @@ using MyApi.Commands;
 var builder = WebApplication.CreateBuilder(args);
 
 // Register services in the container
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<CallerValidationFilter>();
+});
 
 // Register StudentService as Singleton
 builder.Services.AddSingleton<StudentService>();
@@ -32,11 +35,11 @@ builder.Services.AddScoped<LoggingMiddleware>();
 
 var app = builder.Build();
 
-// Apply Middleware for logging
-app.UseMiddleware<LoggingMiddleware>();
+// Apply filters globally
+// CallerValidationFilter is now registered globally via AddControllers options above.
 
 // Apply filters globally
-app.Filters.Add<CallerValidationFilter>();
+// CallerValidationFilter is now registered globally via AddControllers options above.
 
 // Use default routing for controllers
 app.MapControllers();

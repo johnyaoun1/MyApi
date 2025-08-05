@@ -13,8 +13,8 @@ namespace MyApi.Services
         };
 
         public List<Student> GetAll() => _students;
-        public Student GetById(long id) => _students.FirstOrDefault(s => s.Id == id);
-        public List<Student> GetByName(string name) => _students.Where(s => s.Name.Contains(name)).ToList();
+        public Student? GetById(long id) => _students.FirstOrDefault(s => s.Id == id);
+        public List<Student> GetByName(string name) => _students.Where(s => s.Name != null && s.Name.Contains(name)).ToList();
         public void AddStudent(Student student) => _students.Add(student);
         public void UpdateStudent(long id, Student student)
         {
